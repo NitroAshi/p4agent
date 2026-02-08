@@ -12,7 +12,7 @@ class LLMAdapter(Protocol):
     def invoke_structured(self, prompt: str, schema: type[ModelT]) -> ModelT: ...
 
 
-def parse_structured_result(result: Any, schema: type[ModelT]) -> ModelT:
+def parse_structured_result[T: BaseModel](result: Any, schema: type[T]) -> T:
     """Normalize provider outputs into a validated schema object."""
     if isinstance(result, schema):
         return result
