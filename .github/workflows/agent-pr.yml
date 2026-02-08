@@ -1,0 +1,191 @@
+name: Agent PR
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  create_agent_pr:
+    if: ${{ github.event.issue.pull_request == null && startsWith(github.event.comment.body, '/agent-pr') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      P4AGENT_LLM_ENABLED: "true"
+      P4AGENT_LLM_PROVIDER: "openai"
+      P4AGENT_LLM_MODEL: "glm-4.7"
+      P4AGENT_LLM_FALLBACK_TO_RULES: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load GLM env secret
+        env:
+          GLM_ENV: ${{ secrets.GLM_ENV }}
+        run: |
+          if [ -n "$GLM_ENV" ]; then
+            echo "$GLM_ENV" >> "$GITHUB_ENV"
+          fi
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Parse /agent-pr command
+        id: parse
+        run: |
+          uv run python -m app.agent_pr_command \
+            --comment "${{ github.event.comment.body }}" \
+            --output-file "$GITHUB_OUTPUT"
+
+      - name: Reply on invalid command
+        if: ${{ steps.parse.outputs.valid != 'true' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = [
+              "I could not parse this command.",
+              "",
+              `Reason: ${process.env.ERROR_MESSAGE}`,
+              "",
+              "Use this format:",
+              "`/agent-pr append_hello_agent_comment ./aaa.txt`"
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+        env:
+          ERROR_MESSAGE: ${{ steps.parse.outputs.error_message }}
+
+      - name: Run task
+        if: ${{ steps.parse.outputs.valid == 'true' }}
+        run: |
+          uv run p4agent-cli \
+            --task-id "${{ steps.parse.outputs.task_id }}" \
+            --target-file "${{ steps.parse.outputs.target_file }}"
+
+      - name: Quality checks
+        if: ${{ steps.parse.outputs.valid == 'true' }}
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+          uv run mypy src tests
+          uv run pytest
+
+      - name: Detect changes
+        if: ${{ steps.parse.outputs.valid == 'true' }}
+        id: diff
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reply when no changes detected
+        if: ${{ steps.parse.outputs.valid == 'true' && steps.diff.outputs.changed != 'true' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = [
+              "Task ran successfully, but no file changes were detected.",
+              "",
+              `task_id: ${process.env.TASK_ID}`,
+              `target_file: ${process.env.TARGET_FILE}`
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+        env:
+          TASK_ID: ${{ steps.parse.outputs.task_id }}
+          TARGET_FILE: ${{ steps.parse.outputs.target_file }}
+
+      - name: Create pull request
+        if: ${{ steps.parse.outputs.valid == 'true' && steps.diff.outputs.changed == 'true' }}
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: codex/issue-${{ github.event.issue.number }}-${{ github.run_id }}
+          delete-branch: true
+          commit-message: "feat(agent): run ${{ steps.parse.outputs.task_id }} on ${{ steps.parse.outputs.target_file }}"
+          title: "agent: ${{ steps.parse.outputs.task_id }} for #${{ github.event.issue.number }}"
+          body: |
+            ## Summary
+            - Triggered by issue comment command.
+            - Task: `${{ steps.parse.outputs.task_id }}`
+            - Target: `${{ steps.parse.outputs.target_file }}`
+
+            ## Validation
+            - [x] `uv run ruff format --check .`
+            - [x] `uv run ruff check .`
+            - [x] `uv run mypy src tests`
+            - [x] `uv run pytest`
+
+            ## Source
+            - Issue: #${{ github.event.issue.number }}
+            - Comment: ${{ github.event.comment.html_url }}
+          draft: true
+
+      - name: Reply with pull request link
+        if: ${{ steps.cpr.outputs.pull-request-url != '' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = [
+              "Draft PR created.",
+              "",
+              `PR: ${process.env.PR_URL}`,
+              `task_id: ${process.env.TASK_ID}`,
+              `target_file: ${process.env.TARGET_FILE}`
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+        env:
+          PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
+          TASK_ID: ${{ steps.parse.outputs.task_id }}
+          TARGET_FILE: ${{ steps.parse.outputs.target_file }}
+
+      - name: Reply on execution failure
+        if: ${{ failure() && steps.parse.outputs.valid == 'true' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = [
+              "The command was parsed, but execution failed during task run or quality checks.",
+              "",
+              `task_id: ${process.env.TASK_ID}`,
+              `target_file: ${process.env.TARGET_FILE}`,
+              `run: ${process.env.RUN_URL}`
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+        env:
+          TASK_ID: ${{ steps.parse.outputs.task_id }}
+          TARGET_FILE: ${{ steps.parse.outputs.target_file }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

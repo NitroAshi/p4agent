@@ -50,3 +50,23 @@ AZURE_OPENAI_DEPLOYMENT=...
 - Ensure lint/type/test checks pass.
 - Fill PR template with risk and rollback notes.
 - Request review.
+
+## First automated AI PR (issue comment trigger)
+
+This repo includes a GitHub Action workflow: `.github/workflows/agent-pr.yml`.
+
+Current scope:
+
+- Trigger by issue comment command.
+- Run one approved task only: `append_hello_agent_comment`.
+- Create draft PR after checks pass.
+
+Trigger example:
+
+```text
+/agent-pr append_hello_agent_comment ./aaa.txt
+```
+
+Full guide:
+
+- `docs/first_ai_pr.md`
