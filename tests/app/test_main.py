@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main
+from core.service import AgentService
 
 
 @pytest.fixture
@@ -66,4 +67,4 @@ def test_service_provider() -> None:
     provider = main.service_provider()
     service = next(provider)
 
-    assert isinstance(service, main.AgentService)
+    assert isinstance(service, AgentService)
