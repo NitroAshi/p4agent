@@ -1,5 +1,5 @@
-id: append_hello_agnet_comment
-goal: Append a Python comment marker '# hello agnet' to the end of the target file.
+id: append_hello_agent_comment
+goal: Append a Python comment marker '# hello from p4agent' to the end of the target file.
 inputs:
   type: object
   properties:

@@ -10,7 +10,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--task-id", required=True, help="Task identifier from configs/tasks")
     parser.add_argument(
         "--target-file",
-        help="Target file path for append_hello_agnet_comment task",
+        help="Target file path for append_hello_agent_comment task",
     )
     parser.add_argument(
         "--input-json",

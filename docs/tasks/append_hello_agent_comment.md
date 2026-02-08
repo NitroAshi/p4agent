@@ -1,8 +1,8 @@
-# Task: append_hello_agnet_comment
+# Task: append_hello_agent_comment
 
 ## Goal
 
-Append `# hello agnet` to the end of a target Python file.
+Append `# hello from p4agent` to the end of a target Python file.
 
 ## Input
 

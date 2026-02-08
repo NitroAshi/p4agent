@@ -11,12 +11,12 @@ def test_parse_args_with_target_file(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         sys,
         "argv",
-        ["p4agent-cli", "--task-id", "append_hello_agnet_comment", "--target-file", "demo.py"],
+        ["p4agent-cli", "--task-id", "append_hello_agent_comment", "--target-file", "demo.py"],
     )
 
     args = cli.parse_args()
 
-    assert args.task_id == "append_hello_agnet_comment"
+    assert args.task_id == "append_hello_agent_comment"
     assert args.target_file == "demo.py"
 
 
@@ -56,7 +56,7 @@ def test_main_prints_result(
 ) -> None:
     class FakeService:
         def run_task(self, task_id: str, payload: dict[str, object]) -> dict[str, object]:
-            assert task_id == "append_hello_agnet_comment"
+            assert task_id == "append_hello_agent_comment"
             assert payload == {"target_file": "demo.py"}
             return {"status": "ok", "task_id": task_id}
 
@@ -64,7 +64,7 @@ def test_main_prints_result(
         cli,
         "parse_args",
         lambda: argparse.Namespace(
-            task_id="append_hello_agnet_comment",
+            task_id="append_hello_agent_comment",
             input_json=None,
             target_file="demo.py",
         ),
@@ -74,4 +74,4 @@ def test_main_prints_result(
     cli.main()
 
     out = capsys.readouterr().out
-    assert json.loads(out) == {"status": "ok", "task_id": "append_hello_agnet_comment"}
+    assert json.loads(out) == {"status": "ok", "task_id": "append_hello_agent_comment"}

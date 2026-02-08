@@ -18,7 +18,7 @@ A LangChain + LangGraph demo framework in Python for PR-driven agent development
 ```bash
 uv sync --all-extras
 uv run pytest
-uv run p4agent-cli --task-id append_hello_agnet_comment --target-file ./README.md
+uv run p4agent-cli --task-id append_hello_agent_comment --target-file ./README.md
 uv run p4agent-api
 ```
 
@@ -42,7 +42,7 @@ AZURE_OPENAI_DEPLOYMENT=...
 
 ## Demo task
 
-`append_hello_agnet_comment` appends `# hello agnet` to the end of a Python file.
+`append_hello_agent_comment` appends `# hello from p4agent` to the end of a Python file.
 
 ## PR workflow
 

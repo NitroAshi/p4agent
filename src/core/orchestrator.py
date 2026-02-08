@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, cast
 
 from langgraph.graph import END, StateGraph
@@ -59,7 +60,7 @@ class AgentOrchestrator:
 
     def _llm_generate_node(self, state: AgentState) -> AgentState:
         task = self._task_registry.get(state["task_id"])
-        if task.id != "append_hello_agnet_comment" or not settings.llm_enabled:
+        if task.id != "append_hello_agent_comment" or not settings.llm_enabled:
             return state
 
         if self._comment_chain is None:
@@ -87,9 +88,13 @@ class AgentOrchestrator:
         task = self._task_registry.get(state["task_id"])
         payload = state["input_payload"]
 
-        if task.id == "append_hello_agnet_comment":
+        if task.id == "append_hello_agent_comment":
             target_file = str(payload["target_file"])
-            comment_text = str(payload.get("comment_text", "# hello agnet"))
+            comment_text = self._resolve_comment_text(
+                payload=payload,
+                task_goal=task.goal,
+                target_file=target_file,
+            )
             state["tool_result"] = append_text(target_file=target_file, text=comment_text)
             return state
 
@@ -120,3 +125,32 @@ class AgentOrchestrator:
             response["llm_error"] = state["llm_error"]
         state["response"] = response
         return state
+
+    def _resolve_comment_text(
+        self,
+        *,
+        payload: dict[str, Any],
+        task_goal: str,
+        target_file: str,
+    ) -> str:
+        maybe_generated = payload.get("comment_text")
+        if isinstance(maybe_generated, str) and maybe_generated.strip():
+            return self._normalize_comment_line(maybe_generated)
+
+        return self._build_default_comment(task_goal=task_goal, target_file=target_file)
+
+    @staticmethod
+    def _build_default_comment(*, task_goal: str, target_file: str) -> str:
+        filename = Path(target_file).name
+        goal_text = " ".join(task_goal.strip().split())
+        fallback = f"# p4agent fallback: {goal_text} ({filename})"
+        return AgentOrchestrator._normalize_comment_line(fallback)
+
+    @staticmethod
+    def _normalize_comment_line(raw_comment: str) -> str:
+        normalized = " ".join(raw_comment.strip().split())
+        if not normalized.startswith("#"):
+            normalized = f"# {normalized}"
+        elif not normalized.startswith("# "):
+            normalized = f"# {normalized.lstrip('#').strip()}"
+        return normalized

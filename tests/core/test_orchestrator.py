@@ -14,12 +14,12 @@ def test_graph_appends_comment(tmp_path: Path) -> None:
 
     orchestrator = AgentOrchestrator(TaskRegistry(Path("configs/tasks")))
     end_state = orchestrator.invoke(
-        task_id="append_hello_agnet_comment",
+        task_id="append_hello_agent_comment",
         payload={"target_file": str(target)},
     )
 
     content = target.read_text(encoding="utf-8")
-    assert "# hello agnet" in content
+    assert "# hello from p4agent" in content
     assert end_state["response"] is not None
     assert end_state["response"]["status"] == "ok"
 
@@ -40,12 +40,12 @@ def test_llm_bootstrap_failure_falls_back_to_rules(
 
     orchestrator = AgentOrchestrator(TaskRegistry(Path("configs/tasks")))
     end_state = orchestrator.invoke(
-        task_id="append_hello_agnet_comment",
+        task_id="append_hello_agent_comment",
         payload={"target_file": str(target)},
     )
 
     content = target.read_text(encoding="utf-8")
-    assert "# hello agnet" in content
+    assert "# hello from p4agent" in content
     assert end_state["response"] is not None
     assert end_state["response"]["status"] == "ok"
     assert "llm_error" in end_state["response"]
@@ -67,11 +67,11 @@ def test_llm_bootstrap_failure_can_block_execution(
 
     orchestrator = AgentOrchestrator(TaskRegistry(Path("configs/tasks")))
     end_state = orchestrator.invoke(
-        task_id="append_hello_agnet_comment",
+        task_id="append_hello_agent_comment",
         payload={"target_file": str(target)},
     )
 
     content = target.read_text(encoding="utf-8")
-    assert "# hello agnet" not in content
+    assert "# hello from p4agent" not in content
     assert end_state["response"] is not None
     assert end_state["response"]["status"] == "failed"

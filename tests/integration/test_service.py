@@ -9,9 +9,9 @@ def test_service_run_task(tmp_path: Path) -> None:
 
     service = AgentService()
     result = service.run_task(
-        task_id="append_hello_agnet_comment",
+        task_id="append_hello_agent_comment",
         payload={"target_file": str(target)},
     )
 
     assert result["status"] == "ok"
-    assert result["task_id"] == "append_hello_agnet_comment"
+    assert result["task_id"] == "append_hello_agent_comment"

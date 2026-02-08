@@ -1,7 +1,7 @@
 from langchain_openai import AzureChatOpenAI
-from pydantic import BaseModel, SecretStr
+from pydantic import SecretStr
 
-from infra.llm.base import ModelT
+from infra.llm.base import ModelT, extract_text_content, parse_structured_result
 
 
 class AzureOpenAIAdapter:
@@ -26,7 +26,10 @@ class AzureOpenAIAdapter:
 
     def invoke_structured(self, prompt: str, schema: type[ModelT]) -> ModelT:
         runner = self._model.with_structured_output(schema)
-        result: BaseModel | dict[str, object] = runner.invoke(prompt)
-        if isinstance(result, schema):
-            return result
-        return schema.model_validate(result)
+        try:
+            result = runner.invoke(prompt)
+            return parse_structured_result(result, schema)
+        except Exception:
+            raw_result = self._model.invoke(prompt)
+            raw_text = extract_text_content(raw_result)
+            return parse_structured_result(raw_text, schema)

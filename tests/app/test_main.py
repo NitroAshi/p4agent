@@ -22,20 +22,20 @@ def test_health(client: TestClient) -> None:
 def test_list_tasks(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeService:
         def list_tasks(self) -> list[str]:
-            return ["append_hello_agnet_comment"]
+            return ["append_hello_agent_comment"]
 
     monkeypatch.setattr(main, "AgentService", FakeService)
 
     response = client.get("/tasks")
 
     assert response.status_code == 200
-    assert response.json() == {"tasks": ["append_hello_agnet_comment"]}
+    assert response.json() == {"tasks": ["append_hello_agent_comment"]}
 
 
 def test_run_task_success(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeService:
         def run_task(self, task_id: str, payload: dict[str, object]) -> dict[str, object]:
-            assert task_id == "append_hello_agnet_comment"
+            assert task_id == "append_hello_agent_comment"
             assert payload == {"target_file": "demo.py"}
             return {"status": "ok", "task_id": task_id}
 
@@ -43,11 +43,11 @@ def test_run_task_success(client: TestClient, monkeypatch: pytest.MonkeyPatch) -
 
     response = client.post(
         "/run",
-        json={"task_id": "append_hello_agnet_comment", "payload": {"target_file": "demo.py"}},
+        json={"task_id": "append_hello_agent_comment", "payload": {"target_file": "demo.py"}},
     )
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "task_id": "append_hello_agnet_comment"}
+    assert response.json() == {"status": "ok", "task_id": "append_hello_agent_comment"}
 
 
 def test_run_task_not_found(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
