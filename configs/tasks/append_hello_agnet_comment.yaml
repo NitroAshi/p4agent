@@ -1,0 +1,30 @@
+id: append_hello_agnet_comment
+goal: Append a Python comment marker '# hello agnet' to the end of the target file.
+inputs:
+  type: object
+  properties:
+    target_file:
+      type: string
+      description: File path to append the comment to.
+  required:
+    - target_file
+tools_allowed:
+  - append_text
+constraints:
+  max_attempts: 1
+outputs:
+  type: object
+  properties:
+    status:
+      type: string
+    task_id:
+      type: string
+    changed_file:
+      type: string
+    appended_text:
+      type: string
+  required:
+    - status
+    - task_id
+    - changed_file
+    - appended_text
