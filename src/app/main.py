@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from agent_core.service import AgentService
+from core.service import AgentService
 
 
 class RunTaskRequest(BaseModel):

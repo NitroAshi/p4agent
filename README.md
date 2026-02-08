@@ -4,7 +4,9 @@ A LangChain + LangGraph demo framework in Python for PR-driven agent development
 
 ## What this demo includes
 
-- `src/agent_core`: Task registry, state machine, and tool execution.
+- `src/core`: Runtime state and orchestration.
+- `src/tasks`: Task contracts and task registry.
+- `src/infra`: File-system tooling and external adapters.
 - `src/app`: API and CLI entrypoints.
 - `configs/tasks`: Machine-readable task specs.
 - `docs/tasks`: Human-readable task definitions.

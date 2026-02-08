@@ -1,13 +1,14 @@
-from typing import Any
+from typing import Any, cast
 
 from langgraph.graph import END, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
-from agent_core.state import AgentState
-from agent_core.tasks import TaskRegistry
-from agent_core.tools import append_text
+from core.state import AgentState
+from infra.fs import append_text
+from tasks.registry import TaskRegistry
 
 
-class AgentGraph:
+class AgentOrchestrator:
     def __init__(self, task_registry: TaskRegistry):
         self._task_registry = task_registry
         self._compiled = self._build()
@@ -21,10 +22,11 @@ class AgentGraph:
             "response": None,
             "error": None,
         }
-        return self._compiled.invoke(start_state)
+        result = self._compiled.invoke(start_state)
+        return cast(AgentState, result)
 
-    def _build(self):
-        graph: StateGraph = StateGraph(AgentState)
+    def _build(self) -> CompiledStateGraph[AgentState, Any, AgentState, AgentState]:
+        graph: StateGraph[AgentState, Any, AgentState, AgentState] = StateGraph(AgentState)
         graph.add_node("planning", self._planning_node)
         graph.add_node("tool_call", self._tool_node)
         graph.add_node("validation", self._validation_node)

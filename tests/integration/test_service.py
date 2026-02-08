@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from agent_core.service import AgentService
+from core.service import AgentService
 
 
 def test_service_run_task(tmp_path: Path) -> None:

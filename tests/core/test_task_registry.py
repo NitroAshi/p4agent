@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from agent_core.tasks import TaskRegistry
+from tasks.registry import TaskRegistry
 
 
 def test_task_registry_loads_task() -> None:

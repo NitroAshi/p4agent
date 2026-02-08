@@ -33,7 +33,7 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agent_core", "src/app"]
+packages = ["src/app", "src/core", "src/infra", "src/tasks"]
 
 [tool.ruff]
 line-length = 100
