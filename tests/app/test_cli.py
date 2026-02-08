@@ -29,7 +29,7 @@ def test_build_payload_from_input_json() -> None:
 
 
 def test_build_payload_rejects_non_object_json() -> None:
-    args = argparse.Namespace(input_json='[1,2,3]', target_file=None)
+    args = argparse.Namespace(input_json="[1,2,3]", target_file=None)
 
     with pytest.raises(ValueError, match="must decode to a JSON object"):
         cli.build_payload(args)
