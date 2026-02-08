@@ -22,6 +22,24 @@ uv run p4agent-cli --task-id append_hello_agnet_comment --target-file ./README.m
 uv run p4agent-api
 ```
 
+## LLM provider configuration
+
+Set runtime variables in `.env` (or CI secrets):
+
+```bash
+P4AGENT_LLM_ENABLED=false
+P4AGENT_LLM_PROVIDER=openai # openai | anthropic | azure
+P4AGENT_LLM_MODEL=gpt-4o-mini
+P4AGENT_LLM_FALLBACK_TO_RULES=true
+
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...
+AZURE_OPENAI_API_KEY=...
+AZURE_OPENAI_ENDPOINT=...
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+AZURE_OPENAI_DEPLOYMENT=...
+```
+
 ## Demo task
 
 `append_hello_agnet_comment` appends `# hello agnet` to the end of a Python file.
