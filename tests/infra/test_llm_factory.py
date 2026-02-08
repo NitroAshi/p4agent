@@ -10,32 +10,38 @@ from infra.llm.factory import build_llm_adapter
 
 
 def test_factory_rejects_unknown_provider() -> None:
-    cfg = Settings(llm_provider="unknown")
+    cfg = Settings(llm_provider="unknown", _env_file=None)
 
     with pytest.raises(ValueError, match="Unsupported llm_provider"):
         build_llm_adapter(cfg)
 
 
-def test_factory_validates_openai_key() -> None:
-    cfg = Settings(llm_provider="openai", openai_api_key=None)
+def test_factory_validates_openai_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    cfg = Settings(llm_provider="openai", openai_api_key=None, _env_file=None)
 
     with pytest.raises(ValueError, match="OPENAI_API_KEY"):
         build_llm_adapter(cfg)
 
 
-def test_factory_validates_anthropic_key() -> None:
-    cfg = Settings(llm_provider="anthropic", anthropic_api_key=None)
+def test_factory_validates_anthropic_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    cfg = Settings(llm_provider="anthropic", anthropic_api_key=None, _env_file=None)
 
     with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
         build_llm_adapter(cfg)
 
 
-def test_factory_validates_azure_required_fields() -> None:
+def test_factory_validates_azure_required_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AZURE_OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("AZURE_OPENAI_ENDPOINT", raising=False)
+    monkeypatch.delenv("AZURE_OPENAI_DEPLOYMENT", raising=False)
     cfg = Settings(
         llm_provider="azure",
         azure_openai_api_key=None,
         azure_openai_endpoint=None,
         azure_openai_deployment=None,
+        _env_file=None,
     )
 
     with pytest.raises(ValueError, match="AZURE_OPENAI_API_KEY"):
@@ -51,6 +57,7 @@ def test_factory_builds_openai_adapter(monkeypatch: pytest.MonkeyPatch) -> None:
         llm_provider="openai",
         llm_model="gpt-4o-mini",
         openai_base_url=None,
+        _env_file=None,
     )
 
     adapter = cast(dict[str, Any], build_llm_adapter(cfg))
@@ -68,6 +75,7 @@ def test_factory_builds_anthropic_adapter(monkeypatch: pytest.MonkeyPatch) -> No
     cfg = Settings(
         llm_provider="anthropic",
         llm_model="claude-3-5-haiku-latest",
+        _env_file=None,
     )
 
     adapter = cast(dict[str, Any], build_llm_adapter(cfg))
@@ -84,6 +92,7 @@ def test_factory_builds_azure_adapter(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "my-deployment")
     cfg = Settings(
         llm_provider="azure",
+        _env_file=None,
     )
 
     adapter = cast(dict[str, Any], build_llm_adapter(cfg))
