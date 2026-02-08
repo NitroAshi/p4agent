@@ -9,9 +9,20 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      P4AGENT_LLM_ENABLED: "true"
+      P4AGENT_LLM_PROVIDER: "openai"
+      P4AGENT_LLM_MODEL: "glm-4.7"
+      P4AGENT_LLM_TEMPERATURE: "0.6"
+      P4AGENT_LLM_FALLBACK_TO_RULES: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Load GLM env secret
+        if: ${{ secrets.GLM_env != '' }}
+        run: |
+          echo "${{ secrets.GLM_env }}" >> "$GITHUB_ENV"
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v4
