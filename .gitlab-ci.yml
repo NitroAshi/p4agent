@@ -66,13 +66,13 @@ run_task:
   rules:
     - if: '$VALID == "true"'
   script:
-    - echo "Running command: uv run p4agent-cli --task-id \"$TASK_ID\" --target-file \"$TARGET_FILE\""
-    - run_output="$(uv run p4agent-cli --task-id "$TASK_ID" --target-file "$TARGET_FILE")"
-    - echo "Task output:"
-    - printf '%s\n' "$run_output"
-    - printf '%s\n' "$run_output" > run_task_output.json
-    - mkdir -p run_task_artifacts
     - |
+      echo "Running command: uv run p4agent-cli --task-id \"$TASK_ID\" --target-file \"$TARGET_FILE\""
+      run_output="$(uv run p4agent-cli --task-id "$TASK_ID" --target-file "$TARGET_FILE")"
+      echo "Task output:"
+      printf '%s\n' "$run_output"
+      printf '%s\n' "$run_output" > run_task_output.json
+      mkdir -p run_task_artifacts
       if [[ -f "$TARGET_FILE" ]]; then
         cp -- "$TARGET_FILE" run_task_artifacts/target_file_snapshot
         printf '%s\n' "$TARGET_FILE" > run_task_artifacts/target_file_path.txt
