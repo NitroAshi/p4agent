@@ -31,6 +31,13 @@ AGENT_ISSUE_IID=123
 
 `AGENT_ISSUE_IID` is optional. If present, the pipeline posts status notes back to the issue.
 
+Optional mode variable:
+
+```text
+AGENT_MODE=fast   # default, only parse + run task
+AGENT_MODE=full   # includes quality checks and Draft MR creation
+```
+
 ## Command format
 
 ```text
@@ -59,6 +66,8 @@ Rules:
 4. Creates a draft MR if checks pass and changes exist.
 5. Optionally replies in issue notes with parse errors, no-change status, or MR link.
 6. On failure after successful parse, optionally replies with pipeline URL.
+
+When `AGENT_MODE=fast`, the workflow stops after task execution and publishes task output artifacts.
 
 ## Naming and response conventions
 

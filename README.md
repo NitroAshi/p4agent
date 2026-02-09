@@ -101,6 +101,11 @@ AGENT_COMMAND=/agent-pr append_hello_agent_comment ./aaa.txt
 AGENT_ISSUE_IID=123
 ```
 
+Mode options:
+
+- `AGENT_MODE=fast` (default): only parse + run task, publish task output artifact.
+- `AGENT_MODE=full`: parse + run + quality checks + detect changes + create Draft MR.
+
 Full guide:
 
 - `docs/first_ai_mr_gitlab.md`

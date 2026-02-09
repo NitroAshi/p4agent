@@ -26,6 +26,7 @@ variables:
   P4AGENT_LLM_PROVIDER: "openai"
   P4AGENT_LLM_MODEL: "glm-4.7"
   P4AGENT_LLM_FALLBACK_TO_RULES: "true"
+  AGENT_MODE: "fast"
 
 quality:
   stage: quality
@@ -99,7 +100,7 @@ quality_checks_agent:
   stage: quality
   needs: ["run_task", "parse_agent_command"]
   rules:
-    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_MODE == "full"'
   script:
     - |
       if [[ "${VALID:-false}" != "true" ]]; then
@@ -112,7 +113,7 @@ detect_changes:
   stage: diff
   needs: ["quality_checks_agent", "parse_agent_command"]
   rules:
-    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_MODE == "full"'
   script:
     - |
       if [[ "${VALID:-false}" != "true" ]]; then
@@ -132,7 +133,7 @@ reply_no_changes:
   stage: notify
   needs: ["detect_changes", "parse_agent_command"]
   rules:
-    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_MODE == "full" && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
   script:
     - |
       if [[ "${VALID:-false}" != "true" || "${CHANGED:-false}" == "true" ]]; then
@@ -150,7 +151,7 @@ create_merge_request:
   stage: mr
   needs: ["detect_changes", "parse_agent_command"]
   rules:
-    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $GITLAB_TOKEN'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_MODE == "full" && $GITLAB_TOKEN'
   script:
     - |
       if [[ "${VALID:-false}" != "true" || "${CHANGED:-false}" != "true" ]]; then
@@ -167,7 +168,7 @@ reply_mr_link:
   stage: notify
   needs: ["create_merge_request", "parse_agent_command"]
   rules:
-    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_MODE == "full" && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
   script:
     - |
       if [[ -z "${MR_URL:-}" ]]; then
