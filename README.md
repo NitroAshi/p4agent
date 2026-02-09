@@ -12,7 +12,7 @@ A LangChain + LangGraph demo framework in Python for PR-driven agent development
 - `docs/tasks`: Human-readable task definitions.
 - `tests`: Unit and integration tests for core flows.
 - `.github`: GitHub CI plus PR/Issue templates.
-- `.gitlab-ci.yml`: GitLab CI pipeline for automated MR creation.
+- `.gitlab-ci.yml`: GitLab CI for quality gates plus automated MR creation.
 
 ## Quick start
 
@@ -41,6 +41,11 @@ AZURE_OPENAI_API_VERSION=2024-02-15-preview
 AZURE_OPENAI_DEPLOYMENT=...
 ```
 
+CI notes:
+
+- GitHub Actions can inject OpenAI config via one combined secret `GLM_ENV` (multiline `KEY=value`) or by setting `OPENAI_API_KEY` and `OPENAI_BASE_URL` directly.
+- GitLab CI should set `OPENAI_API_KEY` and `OPENAI_BASE_URL` directly in CI/CD variables.
+
 ## Demo task
 
 `append_hello_agent_comment` appends `# hello from p4agent` to the end of a Python file.
@@ -51,6 +56,13 @@ AZURE_OPENAI_DEPLOYMENT=...
 - Ensure lint/type/test checks pass.
 - Fill PR template with risk and rollback notes.
 - Request review.
+
+## CI support matrix
+
+- GitHub: push/PR quality checks in `.github/workflows/ci.yml`.
+- GitLab: push/MR quality checks in `.gitlab-ci.yml` (`quality` job).
+- GitHub agent command: issue comment trigger creates Draft PR.
+- GitLab agent command: pipeline variable trigger creates Draft MR and can reply to issue notes.
 
 ## First automated AI PR (GitHub issue comment trigger)
 

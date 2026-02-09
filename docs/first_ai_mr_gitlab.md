@@ -7,6 +7,7 @@ This guide shows the exact steps to trigger your first automated AI MR in this r
 - It can run one approved task: `append_hello_agent_comment`.
 - It cannot run arbitrary coding instructions yet.
 - It creates a draft MR only when the task changes files and all checks pass.
+- It can post issue notes for invalid command, no-change result, MR link, and execution failure.
 
 ## One-time setup
 
@@ -15,6 +16,7 @@ This guide shows the exact steps to trigger your first automated AI MR in this r
 3. Ensure the default branch is `main`.
 4. Add CI/CD variable `GITLAB_TOKEN` (recommended: Project Access Token with `api` + `write_repository`).
 5. Optional: add LLM secrets if you want external model output.
+   - Set `OPENAI_API_KEY` and `OPENAI_BASE_URL` directly in GitLab CI/CD variables.
 
 This workflow also works without external LLM secrets because fallback mode is enabled.
 
@@ -56,6 +58,7 @@ Rules:
    - `uv run pytest`
 4. Creates a draft MR if checks pass and changes exist.
 5. Optionally replies in issue notes with parse errors, no-change status, or MR link.
+6. On failure after successful parse, optionally replies with pipeline URL.
 
 ## Naming and response conventions
 

@@ -14,6 +14,8 @@ This guide shows the exact steps to trigger your first automated AI PR in this r
 2. Ensure GitHub Actions are enabled for the repository.
 3. Ensure the default branch is `main`.
 4. Optional: add LLM secrets if you want external model output.
+   - Option A: set one multiline secret `GLM_ENV` with lines like `OPENAI_API_KEY=...` and `OPENAI_BASE_URL=...`.
+   - Option B: set `OPENAI_API_KEY` and `OPENAI_BASE_URL` as separate GitHub secrets.
 
 This workflow also works without external LLM secrets because fallback mode is enabled.
 
