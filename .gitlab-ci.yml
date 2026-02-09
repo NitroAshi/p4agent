@@ -48,9 +48,13 @@ reply_invalid_command:
   stage: notify
   needs: ["parse_agent_command"]
   rules:
-    - if: '$VALID != "true" && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
   script:
     - |
+      if [[ "${VALID:-false}" == "true" ]]; then
+        echo "Command is valid; skip invalid-command reply."
+        exit 0
+      fi
       cat <<EOF | ./scripts/ci/post_gitlab_issue_note.sh
       I could not parse this command.
 
@@ -64,9 +68,16 @@ run_task:
   stage: task
   needs: ["parse_agent_command"]
   rules:
-    - if: '$VALID == "true"'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/'
   script:
     - |
+      if [[ "${VALID:-false}" != "true" ]]; then
+        echo "Skip task run because command is invalid: ${ERROR_MESSAGE:-unknown}"
+        printf '{\"status\":\"skipped\",\"reason\":\"invalid command\",\"error\":\"%s\"}\n' "${ERROR_MESSAGE:-unknown}" > run_task_output.json
+        mkdir -p run_task_artifacts
+        printf '%s\n' "${TARGET_FILE:-}" > run_task_artifacts/target_file_path.txt
+        exit 0
+      fi
       echo "Running command: uv run p4agent-cli --task-id \"$TASK_ID\" --target-file \"$TARGET_FILE\""
       run_output="$(uv run p4agent-cli --task-id "$TASK_ID" --target-file "$TARGET_FILE")"
       echo "Task output:"
@@ -86,19 +97,28 @@ run_task:
 
 quality_checks_agent:
   stage: quality
-  needs: ["run_task"]
+  needs: ["run_task", "parse_agent_command"]
   rules:
-    - if: '$VALID == "true"'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/'
   script:
-    - ./scripts/ci/quality_checks.sh
+    - |
+      if [[ "${VALID:-false}" != "true" ]]; then
+        echo "Skip quality checks because command is invalid."
+        exit 0
+      fi
+      ./scripts/ci/quality_checks.sh
 
 detect_changes:
   stage: diff
   needs: ["quality_checks_agent", "parse_agent_command"]
   rules:
-    - if: '$VALID == "true"'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/'
   script:
     - |
+      if [[ "${VALID:-false}" != "true" ]]; then
+        echo "CHANGED=false" > change.env
+        exit 0
+      fi
       if git diff --quiet; then
         echo "CHANGED=false" > change.env
       else
@@ -112,9 +132,13 @@ reply_no_changes:
   stage: notify
   needs: ["detect_changes", "parse_agent_command"]
   rules:
-    - if: '$VALID == "true" && $CHANGED != "true" && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
   script:
     - |
+      if [[ "${VALID:-false}" != "true" || "${CHANGED:-false}" == "true" ]]; then
+        echo "Skip no-change reply."
+        exit 0
+      fi
       cat <<EOF | ./scripts/ci/post_gitlab_issue_note.sh
       Task ran successfully, but no file changes were detected.
 
@@ -126,9 +150,15 @@ create_merge_request:
   stage: mr
   needs: ["detect_changes", "parse_agent_command"]
   rules:
-    - if: '$VALID == "true" && $CHANGED == "true" && $GITLAB_TOKEN'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $GITLAB_TOKEN'
   script:
-    - ./scripts/ci/create_gitlab_mr.sh
+    - |
+      if [[ "${VALID:-false}" != "true" || "${CHANGED:-false}" != "true" ]]; then
+        echo "Skip merge request creation."
+        echo "MR_URL=" > mr.env
+        exit 0
+      fi
+      ./scripts/ci/create_gitlab_mr.sh
   artifacts:
     reports:
       dotenv: mr.env
@@ -137,9 +167,13 @@ reply_mr_link:
   stage: notify
   needs: ["create_merge_request", "parse_agent_command"]
   rules:
-    - if: '$MR_URL && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
+    - if: '$AGENT_COMMAND =~ /^\/agent-pr\s+/ && $AGENT_ISSUE_IID && $GITLAB_TOKEN'
   script:
     - |
+      if [[ -z "${MR_URL:-}" ]]; then
+        echo "Skip MR link reply because MR_URL is empty."
+        exit 0
+      fi
       cat <<EOF | ./scripts/ci/post_gitlab_issue_note.sh
       Draft MR created.
 
