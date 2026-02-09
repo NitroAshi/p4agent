@@ -3,10 +3,16 @@ from __future__ import annotations
 import argparse
 import shlex
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 AGENT_PR_PREFIX = "/agent-pr"
 SUPPORTED_TASK_IDS = {"append_hello_agent_comment"}
+
+
+class OutputFormat(StrEnum):
+    GITHUB = "github"
+    DOTENV = "dotenv"
 
 
 @dataclass(frozen=True)
@@ -72,20 +78,47 @@ def parse_agent_pr_comment(comment_body: str) -> ParseResult:
     )
 
 
-def _write_output(path: Path, result: ParseResult) -> None:
-    with path.open("a", encoding="utf-8") as file_obj:
-        if result.valid and result.command is not None:
-            file_obj.write("valid=true\n")
-            file_obj.write(f"task_id={result.command.task_id}\n")
-            file_obj.write(f"target_file={result.command.target_file}\n")
-            file_obj.write("error_message=\n")
-            return
+def _format_output_lines(result: ParseResult, output_format: OutputFormat) -> list[str]:
+    key_map = (
+        {
+            "valid": "valid",
+            "task_id": "task_id",
+            "target_file": "target_file",
+            "error_message": "error_message",
+        }
+        if output_format == OutputFormat.GITHUB
+        else {
+            "valid": "VALID",
+            "task_id": "TASK_ID",
+            "target_file": "TARGET_FILE",
+            "error_message": "ERROR_MESSAGE",
+        }
+    )
 
-        message = result.error_message or "Unknown parse error"
-        file_obj.write("valid=false\n")
-        file_obj.write("task_id=\n")
-        file_obj.write("target_file=\n")
-        file_obj.write(f"error_message={message}\n")
+    if result.valid and result.command is not None:
+        return [
+            f"{key_map['valid']}=true",
+            f"{key_map['task_id']}={result.command.task_id}",
+            f"{key_map['target_file']}={result.command.target_file}",
+            f"{key_map['error_message']}=",
+        ]
+
+    message = result.error_message or "Unknown parse error"
+    return [
+        f"{key_map['valid']}=false",
+        f"{key_map['task_id']}=",
+        f"{key_map['target_file']}=",
+        f"{key_map['error_message']}={message}",
+    ]
+
+
+def _write_output(path: Path, result: ParseResult, output_format: OutputFormat) -> None:
+    if output_format not in {OutputFormat.GITHUB, OutputFormat.DOTENV}:
+        raise ValueError(f"Unsupported output format: {output_format}")
+
+    with path.open("a", encoding="utf-8") as file_obj:
+        for line in _format_output_lines(result, output_format):
+            file_obj.write(f"{line}\n")
 
 
 def main() -> None:
@@ -94,12 +127,22 @@ def main() -> None:
     parser.add_argument(
         "--output-file",
         required=True,
-        help="GitHub output file path (typically $GITHUB_OUTPUT)",
+        help="Output file path (for GitHub output file or GitLab dotenv artifact)",
+    )
+    parser.add_argument(
+        "--output-format",
+        choices=[OutputFormat.GITHUB.value, OutputFormat.DOTENV.value],
+        default=OutputFormat.GITHUB.value,
+        help="Output format for CI integration",
     )
     args = parser.parse_args()
 
     result = parse_agent_pr_comment(args.comment)
-    _write_output(path=Path(args.output_file), result=result)
+    _write_output(
+        path=Path(args.output_file),
+        result=result,
+        output_format=OutputFormat(args.output_format),
+    )
 
 
 if __name__ == "__main__":

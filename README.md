@@ -11,7 +11,8 @@ A LangChain + LangGraph demo framework in Python for PR-driven agent development
 - `configs/tasks`: Machine-readable task specs.
 - `docs/tasks`: Human-readable task definitions.
 - `tests`: Unit and integration tests for core flows.
-- `.github`: CI plus PR/Issue templates.
+- `.github`: GitHub CI plus PR/Issue templates.
+- `.gitlab-ci.yml`: GitLab CI pipeline for automated MR creation.
 
 ## Quick start
 
@@ -51,7 +52,7 @@ AZURE_OPENAI_DEPLOYMENT=...
 - Fill PR template with risk and rollback notes.
 - Request review.
 
-## First automated AI PR (issue comment trigger)
+## First automated AI PR (GitHub issue comment trigger)
 
 This repo includes a GitHub Action workflow: `.github/workflows/agent-pr.yml`.
 
@@ -70,3 +71,24 @@ Trigger example:
 Full guide:
 
 - `docs/first_ai_pr.md`
+
+## First automated AI MR (GitLab pipeline trigger)
+
+This repo also includes a GitLab pipeline: `.gitlab-ci.yml`.
+
+Current scope:
+
+- Trigger by starting a pipeline and passing `AGENT_COMMAND`.
+- Run one approved task only: `append_hello_agent_comment`.
+- Create draft MR after checks pass.
+
+Trigger variables example:
+
+```text
+AGENT_COMMAND=/agent-pr append_hello_agent_comment ./aaa.txt
+AGENT_ISSUE_IID=123
+```
+
+Full guide:
+
+- `docs/first_ai_mr_gitlab.md`
