@@ -40,10 +40,7 @@ def test_write_output_github_format(tmp_path: Path) -> None:
     _write_output(output_file, result, OutputFormat.GITHUB)
 
     assert output_file.read_text(encoding="utf-8") == (
-        "valid=true\n"
-        "task_id=append_hello_agent_comment\n"
-        "target_file=aaa.txt\n"
-        "error_message=\n"
+        "valid=true\ntask_id=append_hello_agent_comment\ntarget_file=aaa.txt\nerror_message=\n"
     )
 
 
