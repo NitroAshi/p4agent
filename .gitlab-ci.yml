@@ -66,7 +66,23 @@ run_task:
   rules:
     - if: '$VALID == "true"'
   script:
-    - uv run p4agent-cli --task-id "$TASK_ID" --target-file "$TARGET_FILE"
+    - echo "Running command: uv run p4agent-cli --task-id \"$TASK_ID\" --target-file \"$TARGET_FILE\""
+    - run_output="$(uv run p4agent-cli --task-id "$TASK_ID" --target-file "$TARGET_FILE")"
+    - echo "Task output:"
+    - printf '%s\n' "$run_output"
+    - printf '%s\n' "$run_output" > run_task_output.json
+    - mkdir -p run_task_artifacts
+    - |
+      if [[ -f "$TARGET_FILE" ]]; then
+        cp -- "$TARGET_FILE" run_task_artifacts/target_file_snapshot
+        printf '%s\n' "$TARGET_FILE" > run_task_artifacts/target_file_path.txt
+      else
+        echo "Target file not found after task run: $TARGET_FILE" > run_task_artifacts/target_file_missing.txt
+      fi
+  artifacts:
+    paths:
+      - run_task_output.json
+      - run_task_artifacts/
 
 quality_checks_agent:
   stage: quality
