@@ -20,11 +20,12 @@ default:
     - apt-get install -y --no-install-recommends git curl
     - pip install --disable-pip-version-check uv
     - uv sync --all-extras
-  variables:
-    P4AGENT_LLM_ENABLED: "true"
-    P4AGENT_LLM_PROVIDER: "openai"
-    P4AGENT_LLM_MODEL: "glm-4.7"
-    P4AGENT_LLM_FALLBACK_TO_RULES: "true"
+
+variables:
+  P4AGENT_LLM_ENABLED: "true"
+  P4AGENT_LLM_PROVIDER: "openai"
+  P4AGENT_LLM_MODEL: "glm-4.7"
+  P4AGENT_LLM_FALLBACK_TO_RULES: "true"
 
 quality:
   stage: quality
