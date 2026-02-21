@@ -15,6 +15,7 @@ workflow:
 
 default:
   image: python:3.12
+  tags: [shared]
   before_script:
     - apt-get update
     - apt-get install -y --no-install-recommends git curl
@@ -26,6 +27,7 @@ variables:
   P4AGENT_LLM_PROVIDER: "openai"
   P4AGENT_LLM_MODEL: "glm-4.7"
   P4AGENT_LLM_FALLBACK_TO_RULES: "true"
+  PLAYWRIGHT_BROWSERS_PATH: ".playwright-browsers"
   AGENT_MODE: "fast"
 
 quality:
@@ -62,7 +64,7 @@ reply_invalid_command:
       Reason: ${ERROR_MESSAGE}
 
       Use this format:
-      /agent-pr append_hello_agent_comment ./aaa.txt
+      /agent-pr append_hello_agent_comment '{"target_file":"./aaa.txt"}'
       EOF
 
 run_task:
@@ -76,20 +78,25 @@ run_task:
         echo "Skip task run because command is invalid: ${ERROR_MESSAGE:-unknown}"
         printf '{\"status\":\"skipped\",\"reason\":\"invalid command\",\"error\":\"%s\"}\n' "${ERROR_MESSAGE:-unknown}" > run_task_output.json
         mkdir -p run_task_artifacts
-        printf '%s\n' "${TARGET_FILE:-}" > run_task_artifacts/target_file_path.txt
+        printf '%s\n' "${PAYLOAD_JSON:-}" > run_task_artifacts/payload_json.txt
         exit 0
       fi
-      echo "Running command: uv run p4agent-cli --task-id \"$TASK_ID\" --target-file \"$TARGET_FILE\""
-      run_output="$(uv run p4agent-cli --task-id "$TASK_ID" --target-file "$TARGET_FILE")"
+      if [[ "$TASK_ID" == "daily_google_news_report_pipeline" || "$TASK_ID" == "fetch_google_news_homepage" ]]; then
+        echo "Installing Playwright Chromium into ${PLAYWRIGHT_BROWSERS_PATH}"
+        uv run playwright install chromium
+      fi
+      echo "Running command: uv run p4agent-cli --task-id \"$TASK_ID\" --input-json '$PAYLOAD_JSON'"
+      run_output="$(uv run p4agent-cli --task-id "$TASK_ID" --input-json "$PAYLOAD_JSON")"
       echo "Task output:"
       printf '%s\n' "$run_output"
       printf '%s\n' "$run_output" > run_task_output.json
       mkdir -p run_task_artifacts
-      if [[ -f "$TARGET_FILE" ]]; then
-        cp -- "$TARGET_FILE" run_task_artifacts/target_file_snapshot
-        printf '%s\n' "$TARGET_FILE" > run_task_artifacts/target_file_path.txt
+      target_file="$(uv run python -c 'import json, os; print(json.loads(os.environ.get("PAYLOAD_JSON", "{}")).get("target_file", ""))')"
+      if [[ -n "$target_file" && -f "$target_file" ]]; then
+        cp -- "$target_file" run_task_artifacts/target_file_snapshot
+        printf '%s\n' "$target_file" > run_task_artifacts/target_file_path.txt
       else
-        echo "Target file not found after task run: $TARGET_FILE" > run_task_artifacts/target_file_missing.txt
+        echo "Target file not found after task run payload: ${PAYLOAD_JSON}" > run_task_artifacts/target_file_missing.txt
       fi
   artifacts:
     paths:
@@ -144,7 +151,7 @@ reply_no_changes:
       Task ran successfully, but no file changes were detected.
 
       task_id: ${TASK_ID}
-      target_file: ${TARGET_FILE}
+      payload_json: ${PAYLOAD_JSON}
       EOF
 
 create_merge_request:
@@ -180,7 +187,7 @@ reply_mr_link:
 
       MR: ${MR_URL}
       task_id: ${TASK_ID}
-      target_file: ${TARGET_FILE}
+      payload_json: ${PAYLOAD_JSON}
       EOF
 
 reply_execution_failure:
@@ -198,6 +205,6 @@ reply_execution_failure:
       The command was parsed, but execution failed during task run or quality checks.
 
       task_id: ${TASK_ID}
-      target_file: ${TARGET_FILE}
+      payload_json: ${PAYLOAD_JSON}
       run: ${CI_PIPELINE_URL}
       EOF

@@ -1,0 +1,39 @@
+id: fetch_google_news_homepage
+handler: tasks.handlers.fetch_google_news_homepage.FetchGoogleNewsHomepageHandler
+goal: Fetch the Hacker News homepage and extract raw candidate news cards.
+inputs:
+  type: object
+  properties:
+    url:
+      type: string
+      description: Hacker News URL.
+    max_items:
+      type: integer
+      description: Maximum number of cards to collect.
+    timeout_ms:
+      type: integer
+      description: Playwright page timeout in milliseconds.
+    snapshot_dir:
+      type: string
+      description: Directory to store raw HTML snapshot.
+  required: []
+tools_allowed:
+  - playwright_fetch
+constraints:
+  max_attempts: 1
+outputs:
+  type: object
+  properties:
+    fetched_at:
+      type: string
+    source_url:
+      type: string
+    raw_cards:
+      type: array
+    raw_html_path:
+      type: string
+  required:
+    - fetched_at
+    - source_url
+    - raw_cards
+    - raw_html_path

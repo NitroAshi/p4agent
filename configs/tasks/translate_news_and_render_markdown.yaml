@@ -1,0 +1,50 @@
+id: translate_news_and_render_markdown
+handler: tasks.handlers.translate_news_and_render_markdown.TranslateNewsAndRenderMarkdownHandler
+goal: Translate curated English news items to Chinese and Japanese, preserve English, and render a daily Markdown report.
+inputs:
+  type: object
+  properties:
+    items_en:
+      type: array
+      description: Curated English items.
+    date:
+      type: string
+      description: Report date in YYYY-MM-DD.
+    timezone:
+      type: string
+      description: Timezone used for default date.
+    output_path:
+      type: string
+      description: Markdown output file path.
+    translate_batch_size:
+      type: integer
+      description: Number of items translated per LLM request.
+    translate_max_retries:
+      type: integer
+      description: Max retries per translation batch on timeout/rate-limit.
+    translate_retry_seconds:
+      type: integer
+      description: Base wait seconds between translation retries.
+  required:
+    - items_en
+tools_allowed:
+  - llm_structured_output
+  - write_file
+constraints:
+  max_attempts: 1
+outputs:
+  type: object
+  properties:
+    output_path:
+      type: string
+    item_count:
+      type: integer
+    markdown_preview:
+      type: string
+    report_date:
+      type: string
+  required:
+    - output_path
+    - item_count
+    - markdown_preview
+    - report_date

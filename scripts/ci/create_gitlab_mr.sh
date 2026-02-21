@@ -6,8 +6,8 @@ if [[ -z "${GITLAB_TOKEN:-}" ]]; then
   exit 1
 fi
 
-if [[ -z "${TASK_ID:-}" || -z "${TARGET_FILE:-}" ]]; then
-  echo "TASK_ID and TARGET_FILE are required."
+if [[ -z "${TASK_ID:-}" || -z "${PAYLOAD_JSON:-}" ]]; then
+  echo "TASK_ID and PAYLOAD_JSON are required."
   exit 1
 fi
 
@@ -23,7 +23,7 @@ if git diff --cached --quiet; then
   exit 0
 fi
 
-git commit -m "feat(agent): run ${TASK_ID} on ${TARGET_FILE}"
+git commit -m "feat(agent): run ${TASK_ID} with payload"
 
 remote_url="https://oauth2:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
 git push "${remote_url}" "HEAD:${branch_name}"
@@ -33,7 +33,7 @@ description="$(
 ## Summary
 - Triggered by AGENT_COMMAND in GitLab CI.
 - Task: \`${TASK_ID}\`
-- Target: \`${TARGET_FILE}\`
+- Payload: \`${PAYLOAD_JSON}\`
 
 ## Validation
 - [x] \`uv run ruff format --check .\`

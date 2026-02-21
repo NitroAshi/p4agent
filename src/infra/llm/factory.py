@@ -35,12 +35,14 @@ def build_llm_adapter(cfg: Settings) -> LLMAdapter:
             raise ValueError("AZURE_OPENAI_API_KEY is required when llm_provider=azure")
         if not cfg.azure_openai_endpoint:
             raise ValueError("AZURE_OPENAI_ENDPOINT is required when llm_provider=azure")
-        if not cfg.azure_openai_deployment:
-            raise ValueError("AZURE_OPENAI_DEPLOYMENT is required when llm_provider=azure")
+        # if not cfg.azure_openai_deployment:
+            # raise ValueError("AZURE_OPENAI_DEPLOYMENT is required when llm_provider=azure")
+        # if deployment is not set, use llm_model as deployment name
+        deployment = cfg.azure_openai_deployment or cfg.llm_model
         from infra.llm.azure_adapter import AzureOpenAIAdapter
 
         return AzureOpenAIAdapter(
-            deployment=cfg.azure_openai_deployment,
+            deployment=deployment,
             endpoint=cfg.azure_openai_endpoint,
             api_key=cfg.azure_openai_api_key,
             api_version=cfg.azure_openai_api_version,

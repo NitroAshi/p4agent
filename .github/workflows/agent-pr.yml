@@ -19,6 +19,7 @@ jobs:
       P4AGENT_LLM_PROVIDER: "openai"
       P4AGENT_LLM_MODEL: "glm-4.7"
       P4AGENT_LLM_FALLBACK_TO_RULES: "true"
+      PLAYWRIGHT_BROWSERS_PATH: ".playwright-browsers"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,7 +62,7 @@ jobs:
               `Reason: ${process.env.ERROR_MESSAGE}`,
               "",
               "Use this format:",
-              "`/agent-pr append_hello_agent_comment ./aaa.txt`"
+              "`/agent-pr append_hello_agent_comment '{\"target_file\":\"./aaa.txt\"}'`"
             ].join("\n");
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -75,9 +76,12 @@ jobs:
       - name: Run task
         if: ${{ steps.parse.outputs.valid == 'true' }}
         run: |
+          if [ "${{ steps.parse.outputs.task_id }}" = "daily_google_news_report_pipeline" ] || [ "${{ steps.parse.outputs.task_id }}" = "fetch_google_news_homepage" ]; then
+            uv run playwright install chromium
+          fi
           uv run p4agent-cli \
             --task-id "${{ steps.parse.outputs.task_id }}" \
-            --target-file "${{ steps.parse.outputs.target_file }}"
+            --input-json "${{ steps.parse.outputs.payload_json }}"
 
       - name: Quality checks
         if: ${{ steps.parse.outputs.valid == 'true' }}
@@ -102,7 +106,7 @@ jobs:
               "Task ran successfully, but no file changes were detected.",
               "",
               `task_id: ${process.env.TASK_ID}`,
-              `target_file: ${process.env.TARGET_FILE}`
+              `payload_json: ${process.env.PAYLOAD_JSON}`
             ].join("\n");
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -112,7 +116,7 @@ jobs:
             });
         env:
           TASK_ID: ${{ steps.parse.outputs.task_id }}
-          TARGET_FILE: ${{ steps.parse.outputs.target_file }}
+          PAYLOAD_JSON: ${{ steps.parse.outputs.payload_json }}
 
       - name: Create pull request
         if: ${{ steps.parse.outputs.valid == 'true' && steps.diff.outputs.changed == 'true' }}
@@ -121,13 +125,13 @@ jobs:
         with:
           branch: codex/issue-${{ github.event.issue.number }}-${{ github.run_id }}
           delete-branch: true
-          commit-message: "feat(agent): run ${{ steps.parse.outputs.task_id }} on ${{ steps.parse.outputs.target_file }}"
+          commit-message: "feat(agent): run ${{ steps.parse.outputs.task_id }} with payload"
           title: "agent: ${{ steps.parse.outputs.task_id }} for #${{ github.event.issue.number }}"
           body: |
             ## Summary
             - Triggered by issue comment command.
             - Task: `${{ steps.parse.outputs.task_id }}`
-            - Target: `${{ steps.parse.outputs.target_file }}`
+            - Payload: `${{ steps.parse.outputs.payload_json }}`
 
             ## Validation
             - [x] `uv run ruff format --check .`
@@ -150,7 +154,7 @@ jobs:
               "",
               `PR: ${process.env.PR_URL}`,
               `task_id: ${process.env.TASK_ID}`,
-              `target_file: ${process.env.TARGET_FILE}`
+              `payload_json: ${process.env.PAYLOAD_JSON}`
             ].join("\n");
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -161,7 +165,7 @@ jobs:
         env:
           PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
           TASK_ID: ${{ steps.parse.outputs.task_id }}
-          TARGET_FILE: ${{ steps.parse.outputs.target_file }}
+          PAYLOAD_JSON: ${{ steps.parse.outputs.payload_json }}
 
       - name: Reply on execution failure
         if: ${{ failure() && steps.parse.outputs.valid == 'true' }}
@@ -172,7 +176,7 @@ jobs:
               "The command was parsed, but execution failed during task run or quality checks.",
               "",
               `task_id: ${process.env.TASK_ID}`,
-              `target_file: ${process.env.TARGET_FILE}`,
+              `payload_json: ${process.env.PAYLOAD_JSON}`,
               `run: ${process.env.RUN_URL}`
             ].join("\n");
             await github.rest.issues.createComment({
@@ -183,5 +187,5 @@ jobs:
             });
         env:
           TASK_ID: ${{ steps.parse.outputs.task_id }}
-          TARGET_FILE: ${{ steps.parse.outputs.target_file }}
+          PAYLOAD_JSON: ${{ steps.parse.outputs.payload_json }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

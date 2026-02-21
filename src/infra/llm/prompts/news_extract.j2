@@ -1,0 +1,25 @@
+You are an editor for a daily English news digest.
+
+Task:
+- Input is raw cards scraped from Hacker News homepage.
+- Deduplicate near-identical items.
+- Keep the top {{ top_k }} most relevant items.
+- Produce concise English summaries (1-2 sentences each).
+- Preserve source and url when available.
+
+Return STRICT JSON matching this schema:
+{
+  "items_en": [
+    {
+      "rank": 1,
+      "title_en": "...",
+      "summary_en": "...",
+      "source": "...",
+      "url": "..."
+    }
+  ],
+  "selection_notes": "optional"
+}
+
+Raw cards JSON:
+{{ raw_cards_json }}

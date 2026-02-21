@@ -19,7 +19,7 @@ A LangChain + LangGraph demo framework in Python for PR-driven agent development
 ```bash
 uv sync --all-extras
 uv run pytest
-uv run p4agent-cli --task-id append_hello_agent_comment --target-file ./README.md
+uv run p4agent-cli --task-id append_hello_agent_comment --input-json '{"target_file":"./README.md"}'
 uv run p4agent-api
 ```
 
@@ -50,6 +50,23 @@ CI notes:
 
 `append_hello_agent_comment` appends `# hello from p4agent` to the end of a Python file.
 
+## Daily Hacker News pipeline task
+
+Run the multilingual daily report pipeline:
+
+```bash
+PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers uv run playwright install chromium
+uv run p4agent-cli --task-id daily_google_news_report_pipeline --input-json '{"max_items":10,"timezone":"Asia/Shanghai","output_path":"artifacts/news_today.md"}'
+```
+
+You can skip `PLAYWRIGHT_BROWSERS_PATH` if browsers are already installed globally.
+
+If your provider times out or rate-limits, tune translation batching/retries:
+
+```bash
+uv run p4agent-cli --task-id daily_google_news_report_pipeline --input-json '{"max_items":10,"timezone":"Asia/Shanghai","output_path":"artifacts/news_today.md","translate_batch_size":2,"translate_max_retries":4,"translate_retry_seconds":2}'
+```
+
 ## PR workflow
 
 - Open branch from `main` (`feat/*`, `fix/*`).
@@ -77,7 +94,7 @@ Current scope:
 Trigger example:
 
 ```text
-/agent-pr append_hello_agent_comment ./aaa.txt
+/agent-pr append_hello_agent_comment '{"target_file":"./aaa.txt"}'
 ```
 
 Full guide:
@@ -97,7 +114,7 @@ Current scope:
 Trigger variables example:
 
 ```text
-AGENT_COMMAND=/agent-pr append_hello_agent_comment ./aaa.txt
+AGENT_COMMAND=/agent-pr append_hello_agent_comment '{"target_file":"./aaa.txt"}'
 AGENT_ISSUE_IID=123
 ```
 

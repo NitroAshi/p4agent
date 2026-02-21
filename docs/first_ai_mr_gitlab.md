@@ -25,7 +25,7 @@ This workflow also works without external LLM secrets because fallback mode is e
 Run a new pipeline and provide variables:
 
 ```text
-AGENT_COMMAND=/agent-pr append_hello_agent_comment ./aaa.txt
+AGENT_COMMAND=/agent-pr append_hello_agent_comment '{"target_file":"./aaa.txt"}'
 AGENT_ISSUE_IID=123
 ```
 
@@ -41,17 +41,17 @@ AGENT_MODE=full   # includes quality checks and Draft MR creation
 ## Command format
 
 ```text
-/agent-pr <task_id> <target_file>
+/agent-pr <task_id> '<json_payload>'
 ```
 
 Rules:
 
 - `task_id` must be `append_hello_agent_comment`
+- payload must be a JSON object
 - `target_file` can be relative path like `./aaa.txt`
-- For paths with spaces, use quotes:
 
 ```text
-/agent-pr append_hello_agent_comment "./notes/demo file.py"
+/agent-pr append_hello_agent_comment '{"target_file":"./notes/demo file.py"}'
 ```
 
 ## What the bot does after trigger
@@ -73,7 +73,7 @@ When `AGENT_MODE=fast`, the workflow stops after task execution and publishes ta
 
 - Branch: `codex/issue-<issue_iid_or_manual>-<pipeline_id>`
 - MR title: `Draft: agent: <task_id> for #<issue_iid_or_manual>`
-- Commit message: `feat(agent): run <task_id> on <target_file>`
+- Commit message: `feat(agent): run <task_id> with payload`
 - Invalid command reply:
   - starts with `I could not parse this command.`
   - includes reason and valid command example

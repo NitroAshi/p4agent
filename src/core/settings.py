@@ -22,7 +22,7 @@ class Settings(BaseSettings):
         default=None, validation_alias="AZURE_OPENAI_ENDPOINT"
     )
     azure_openai_api_version: str = Field(
-        default="2024-02-15-preview",
+        default="2025-04-01-preview",
         validation_alias="AZURE_OPENAI_API_VERSION",
     )
     azure_openai_deployment: str | None = Field(

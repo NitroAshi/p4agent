@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shlex
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
+from core.settings import settings
+from tasks.registry import TaskRegistry
+
 AGENT_PR_PREFIX = "/agent-pr"
-SUPPORTED_TASK_IDS = {"append_hello_agent_comment"}
 
 
 class OutputFormat(StrEnum):
@@ -18,7 +21,7 @@ class OutputFormat(StrEnum):
 @dataclass(frozen=True)
 class AgentPrCommand:
     task_id: str
-    target_file: str
+    payload_json: str
 
 
 @dataclass(frozen=True)
@@ -28,7 +31,11 @@ class ParseResult:
     error_message: str | None
 
 
-def parse_agent_pr_comment(comment_body: str) -> ParseResult:
+def parse_agent_pr_comment(
+    comment_body: str,
+    *,
+    supported_task_ids: set[str] | None = None,
+) -> ParseResult:
     text = comment_body.strip()
     if not text.startswith(AGENT_PR_PREFIX):
         return ParseResult(
@@ -42,7 +49,7 @@ def parse_agent_pr_comment(comment_body: str) -> ParseResult:
         return ParseResult(
             valid=False,
             command=None,
-            error_message="Missing arguments. Expected: /agent-pr <task_id> <target_file>",
+            error_message="Missing arguments. Expected: /agent-pr <task_id> '<json_payload>'",
         )
 
     try:
@@ -58,22 +65,39 @@ def parse_agent_pr_comment(comment_body: str) -> ParseResult:
         return ParseResult(
             valid=False,
             command=None,
-            error_message="Expected exactly two arguments: /agent-pr <task_id> <target_file>",
+            error_message="Expected exactly two arguments: /agent-pr <task_id> '<json_payload>'",
         )
 
-    task_id, target_file = parts
-    if task_id not in SUPPORTED_TASK_IDS:
-        known = ", ".join(sorted(SUPPORTED_TASK_IDS))
+    task_id, payload_json = parts
+    known_task_ids = supported_task_ids or set(TaskRegistry(settings.task_config_dir).list_ids())
+    if task_id not in known_task_ids:
+        known = ", ".join(sorted(known_task_ids))
         return ParseResult(
             valid=False,
             command=None,
             error_message=f"Unsupported task_id '{task_id}'. Supported tasks: {known}",
         )
 
-    normalized_target = str(Path(target_file))
+    try:
+        payload_obj = json.loads(payload_json)
+    except json.JSONDecodeError as exc:
+        return ParseResult(
+            valid=False,
+            command=None,
+            error_message=f"Payload must be valid JSON object: {exc}",
+        )
+
+    if not isinstance(payload_obj, dict):
+        return ParseResult(
+            valid=False,
+            command=None,
+            error_message="Payload must decode to a JSON object.",
+        )
+
+    normalized_payload = json.dumps(payload_obj, ensure_ascii=True, separators=(",", ":"))
     return ParseResult(
         valid=True,
-        command=AgentPrCommand(task_id=task_id, target_file=normalized_target),
+        command=AgentPrCommand(task_id=task_id, payload_json=normalized_payload),
         error_message=None,
     )
 
@@ -83,14 +107,14 @@ def _format_output_lines(result: ParseResult, output_format: OutputFormat) -> li
         {
             "valid": "valid",
             "task_id": "task_id",
-            "target_file": "target_file",
+            "payload_json": "payload_json",
             "error_message": "error_message",
         }
         if output_format == OutputFormat.GITHUB
         else {
             "valid": "VALID",
             "task_id": "TASK_ID",
-            "target_file": "TARGET_FILE",
+            "payload_json": "PAYLOAD_JSON",
             "error_message": "ERROR_MESSAGE",
         }
     )
@@ -99,7 +123,7 @@ def _format_output_lines(result: ParseResult, output_format: OutputFormat) -> li
         return [
             f"{key_map['valid']}=true",
             f"{key_map['task_id']}={result.command.task_id}",
-            f"{key_map['target_file']}={result.command.target_file}",
+            f"{key_map['payload_json']}={result.command.payload_json}",
             f"{key_map['error_message']}=",
         ]
 
@@ -107,7 +131,7 @@ def _format_output_lines(result: ParseResult, output_format: OutputFormat) -> li
     return [
         f"{key_map['valid']}=false",
         f"{key_map['task_id']}=",
-        f"{key_map['target_file']}=",
+        f"{key_map['payload_json']}=",
         f"{key_map['error_message']}={message}",
     ]
 

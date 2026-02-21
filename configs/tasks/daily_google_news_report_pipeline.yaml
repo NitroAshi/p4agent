@@ -1,0 +1,65 @@
+id: daily_google_news_report_pipeline
+handler: tasks.handlers.daily_google_news_report_pipeline.DailyGoogleNewsReportPipelineHandler
+goal: Build a daily multilingual Hacker News Markdown report by orchestrating fetch, extract, and translation tasks.
+inputs:
+  type: object
+  properties:
+    url:
+      type: string
+      description: Hacker News URL.
+    max_items:
+      type: integer
+      description: Number of top items to keep.
+    timeout_ms:
+      type: integer
+      description: Playwright timeout.
+    snapshot_dir:
+      type: string
+      description: Raw HTML snapshot directory.
+    date:
+      type: string
+      description: Report date in YYYY-MM-DD.
+    timezone:
+      type: string
+      description: Timezone used for default date.
+    output_path:
+      type: string
+      description: Markdown output file path.
+    translate_batch_size:
+      type: integer
+      description: Number of items translated per LLM request.
+    translate_max_retries:
+      type: integer
+      description: Max retries per translation batch on timeout/rate-limit.
+    translate_retry_seconds:
+      type: integer
+      description: Base wait seconds between translation retries.
+  required: []
+tools_allowed:
+  - orchestrate_subtasks
+constraints:
+  max_attempts: 1
+outputs:
+  type: object
+  properties:
+    report_markdown_path:
+      type: string
+    report_date:
+      type: string
+    item_count:
+      type: integer
+    steps:
+      type: array
+    source_url:
+      type: string
+    selection_notes:
+      type: string
+    markdown_preview:
+      type: string
+  required:
+    - report_markdown_path
+    - report_date
+    - item_count
+    - steps
+    - source_url
+    - markdown_preview

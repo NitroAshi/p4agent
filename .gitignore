@@ -1,7 +1,7 @@
 __pycache__/
 *.py[cod]
 .venv/
-.pytest_cache/
+.pytest_cache/                                                          
 .ruff_cache/
 .mypy_cache/
 .coverage
@@ -9,3 +9,6 @@ coverage.xml
 dist/
 *.egg-info/
 .env
+aaa.txt
+.playwright-browsers/
+artifacts/

@@ -1,4 +1,5 @@
 id: append_hello_agent_comment
+handler: tasks.handlers.append_hello_agent_comment.AppendHelloAgentCommentHandler
 goal: Append a Python comment marker '# hello from p4agent' to the end of the target file.
 inputs:
   type: object

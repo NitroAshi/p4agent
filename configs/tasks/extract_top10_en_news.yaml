@@ -1,0 +1,27 @@
+id: extract_top10_en_news
+handler: tasks.handlers.extract_top10_en_news.ExtractTop10EnNewsHandler
+goal: Use an LLM to deduplicate and extract the top English Hacker News items with concise summaries.
+inputs:
+  type: object
+  properties:
+    raw_cards:
+      type: array
+      description: Raw scraped cards from Hacker News.
+    top_k:
+      type: integer
+      description: Number of top items to keep.
+  required:
+    - raw_cards
+tools_allowed:
+  - llm_structured_output
+constraints:
+  max_attempts: 1
+outputs:
+  type: object
+  properties:
+    items_en:
+      type: array
+    selection_notes:
+      type: string
+  required:
+    - items_en

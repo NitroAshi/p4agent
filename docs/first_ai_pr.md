@@ -24,23 +24,23 @@ This workflow also works without external LLM secrets because fallback mode is e
 Create a GitHub issue, then add this comment:
 
 ```text
-/agent-pr append_hello_agent_comment ./aaa.txt
+/agent-pr append_hello_agent_comment '{"target_file":"./aaa.txt"}'
 ```
 
 ## Command format
 
 ```text
-/agent-pr <task_id> <target_file>
+/agent-pr <task_id> '<json_payload>'
 ```
 
 Rules:
 
 - `task_id` must be `append_hello_agent_comment`
+- payload must be a JSON object
 - `target_file` can be relative path like `./aaa.txt`
-- For paths with spaces, use quotes:
 
 ```text
-/agent-pr append_hello_agent_comment "./notes/demo file.py"
+/agent-pr append_hello_agent_comment '{"target_file":"./notes/demo file.py"}'
 ```
 
 ## What the bot does after trigger
@@ -58,7 +58,7 @@ Rules:
 
 - Branch: `codex/issue-<issue_number>-<run_id>`
 - PR title: `agent: <task_id> for #<issue_number>`
-- Commit message: `feat(agent): run <task_id> on <target_file>`
+- Commit message: `feat(agent): run <task_id> with payload`
 - Invalid command reply:
   - starts with `I could not parse this command.`
   - includes reason and valid command example

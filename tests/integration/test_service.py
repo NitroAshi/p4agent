@@ -15,3 +15,12 @@ def test_service_run_task(tmp_path: Path) -> None:
 
     assert result["status"] == "ok"
     assert result["task_id"] == "append_hello_agent_comment"
+
+
+def test_service_run_unknown_task_returns_structured_failure() -> None:
+    service = AgentService()
+
+    result = service.run_task(task_id="unknown", payload={})
+
+    assert result["status"] == "failed"
+    assert result["error"]["code"] == "TASK_NOT_FOUND"
