@@ -67,7 +67,7 @@ def test_write_output_github_format(tmp_path: Path) -> None:
     assert output_file.read_text(encoding="utf-8") == (
         "valid=true\n"
         "task_id=append_hello_agent_comment\n"
-        "payload_json={\"target_file\":\"./aaa.txt\"}\n"
+        'payload_json={"target_file":"./aaa.txt"}\n'
         "error_message=\n"
     )
 

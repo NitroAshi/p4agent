@@ -170,10 +170,12 @@ def _render_markdown(*, report_date: str, timezone_name: str, items: list[dict[s
     ]
 
     if len(items) < 10:
-        lines.extend([
-            f"> Note: only `{len(items)}` items were available (< 10).",
-            "",
-        ])
+        lines.extend(
+            [
+                f"> Note: only `{len(items)}` items were available (< 10).",
+                "",
+            ]
+        )
 
     for item in items:
         rank = item.get("rank", "")
