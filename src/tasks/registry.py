@@ -93,6 +93,12 @@ def _build_handler(spec: TaskSpec) -> TaskHandler:
         raise ValueError(f"Handler class '{class_name}' was not found in module '{module_name}'.")
 
     handler = handler_class()
+    from tasks.handlers.base import TaskHandler as TaskHandlerBase
+
+    if not isinstance(handler, TaskHandlerBase):
+        raise ValueError(
+            f"Handler '{spec.handler}' did not produce a TaskHandler instance."
+        )
     resolved_task_id = getattr(handler, "task_id", None)
     if resolved_task_id != spec.id:
         raise ValueError(
