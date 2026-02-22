@@ -96,9 +96,7 @@ def _build_handler(spec: TaskSpec) -> TaskHandler:
     from tasks.handlers.base import TaskHandler as TaskHandlerBase
 
     if not isinstance(handler, TaskHandlerBase):
-        raise ValueError(
-            f"Handler '{spec.handler}' did not produce a TaskHandler instance."
-        )
+        raise ValueError(f"Handler '{spec.handler}' did not produce a TaskHandler instance.")
     resolved_task_id = getattr(handler, "task_id", None)
     if resolved_task_id != spec.id:
         raise ValueError(
