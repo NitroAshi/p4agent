@@ -15,7 +15,7 @@ workflow:
 
 default:
   image: python:3.12
-  tags: [shared]
+  # tags: [shared]
   before_script:
     - apt-get update
     - apt-get install -y --no-install-recommends git curl
